@@ -3,7 +3,6 @@ import requests
 from datetime import datetime
 import json
 import random
-
 headers = {
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'en-US,en;q=0.9',
@@ -11,10 +10,6 @@ headers = {
     "referer": "https://mini.playvaliants.com/",
 }
 
-# {id: 12,squence: [3,4,5,13],
-# id: 2, squence [],
-# id : 1, squence: [3,1,3,18]
-# }
 
 def load_credentials():
     try:
@@ -26,7 +21,20 @@ def load_credentials():
         print("File query_id.txt tidak ditemukan.")
         return 
     except Exception as e:
-        print("Terjadi kesalahan saat memuat query:", str(e))
+        print("Failed load  query:", str(e))
+        return 
+
+def load_boss():
+    try:
+        with open('list_boss.txt', 'r') as f:
+            queries = [line.strip() for line in f.readlines()]
+        # print("Token berhasil dimuat.")
+        return queries
+    except FileNotFoundError:
+        print("File list_boss.txt tidak ditemukan.")
+        return 
+    except Exception as e:
+        print("Failed load list_boss:", str(e))
         return 
 
 def getuseragent(index):
@@ -157,7 +165,7 @@ def taptap(token, payload):
         print(f'Error making request: {e}')
         return None
 
-def squence(token, payload):
+def put_squence(token, payload):
     url = 'https://mini.playvaliants.com/api/sequence'
     headers['authorization'] = f'Bearer {token}'
     try:
@@ -216,19 +224,83 @@ def upgrade_multitap(token):
         print(f'Error making request: {e}')
         return None
 
+def refill(token):
+    url = 'https://mini.playvaliants.com/api/user/refill-energy'
+    payload = {}
+    headers['authorization'] = f'Bearer {token}'
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code >= 500:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 400:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 200:
+            return response.json()
+        else:
+            raise Exception(f'Unexpected status code: {response.status_code}')
+    except requests.exceptions.RequestException as e:
+        print(f'Error making request: {e}')
+        return None
+
+def unlocks(token, payload):
+    url = 'https://mini.playvaliants.com/api/unlock'
+    headers['authorization'] = f'Bearer {token}'
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code >= 500:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 400:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 200:
+            return response.json()
+        else:
+            raise Exception(f'Unexpected status code: {response.status_code}')
+    except requests.exceptions.RequestException as e:
+        print(f'Error making request: {e}')
+        return None
+
 def combo_claim(token):
     url = 'https://mini.playvaliants.com/api/combo/claim'
     payload = {}
+    headers['authorization'] = f'Bearer {token}'
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code >= 500:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 400:
+            print(f"Status Code : {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 200:
+            return response.json()
+        else:
+            raise Exception(f'Unexpected status code: {response.status_code}')
+    except requests.exceptions.RequestException as e:
+        print(f'Error making request: {e}')
+        return None
+
+def get_data_by_id(list_boss, id):
+    for boss in list_boss:
+        if boss['id'] == id:
+            return boss
+    return None
 
 def main():
-    queries = load_credentials()
+    
     mission = input("Enter 'y' for mission or 'n' to skip: ")
-    # auto_battle = input("Enter 'y' for auto battle or 'n' to skip: ")
-    # auto_combo = input("Enter 'y' for auto combo or 'n' to skip: ")
+    auto_battle = input("Enter 'y' for auto battle or 'n' to skip: ")
+    auto_combo = input("Enter 'y' for auto combo or 'n' to skip: ")
     auto_update = input("Enter 'y' for auto update or 'n' to skip: ")
     if auto_update == 'y':
         max_level = int(input("Enter the maximum level upgrade: "))
     while True:
+        list_combo = []
+        queries = load_credentials()
+        list_boss = load_boss()
         for index, token in enumerate(queries):
             useragent = getuseragent(index)
             headers['user-agent'] = useragent
@@ -238,6 +310,7 @@ def main():
                 energy = data_login.get('energy')
                 energy_level = data_login.get('energy_level')
                 click_level = data_login.get('click_level')
+                refills = data_login.get('refills')
                 print(f"Energy : {data_login.get('energy')}/{data_login.get('energy_cap')}")
                 time.sleep(1)
                 print("Claim daily reward")
@@ -252,21 +325,11 @@ def main():
                         print(f"Daily claimed day {data_daily.get('day')} Reward : {data_daily.get('reward')}")
                         time.sleep(2)
 
-                if auto_update =='y':
-                    if energy_level < max_level:
-                        print("Upgraded energy")
-                        time.sleep(1)
-                        data_upgrade = upgrade_energy(token)
-                        if data_upgrade is not None:
-                            print(f"Upgraded energy cap to {data_upgrade.get('energy_level')}")
-                        time.sleep(2)
-                    if click_level < max_level:
-                        print("Upgraded multitap")
-                        time.sleep(1)
-                        data_upgrade = upgrade_multitap(token)
-                        if data_upgrade is not None:
-                            print(f"Upgraded energy cap to {data_upgrade.get('click_level')}")
-                        time.sleep(2)
+                # payload = {'id': 36}
+                # unlocks_boost = unlocks(token, payload)
+                # if unlocks_boost is not None:
+                #     print(f"{unlocks_boost.get('message')}")
+                # time.sleep(2)
 
                 if mission == 'y':
                     data_mission = get_mission(token)
@@ -285,9 +348,75 @@ def main():
                                     reward = data_claim.get('reward')
                                     print(f"Mission {id} claimed successfully | Reward : {reward}")
 
+                if auto_combo == 'y':
+                    combo = data_login.get('combo')
+                    combo_completed = combo.get('combo_completed', False)
+                    if combo_completed == True:
+                        list_combo = combo.get('combo')
+                        claimed = combo.get('claimed')
+                        if claimed == False:
+                            data_combo_claim = combo_claim(token)
+                            if data_combo_claim is not None:
+                                print(f"Status : {data_combo_claim.get('message')} Reward : {data_combo_claim.get('reward')}")
+                    else:
+                        for ids in list_combo:
+                            time.sleep(2)
+                            payload = {'id': ids}
+                            data_unlocks = unlocks(token, payload)
+                            if data_unlocks is not None:
+                                print(f"Card Id : {ids} | Unlock perHours : {data_unlocks.get('unlock_experience_per_hour')} | Status Combo : {data_unlocks.get('combo_completed')}")
+                        time.sleep(2)
+                        data_combo_claim = combo_claim(token)
+                        if data_combo_claim is not None:
+                            print(f"Status : {data_combo_claim.get('message')} Reward : {data_combo_claim.get('reward')}")
+
+                if auto_battle == 'y':
+                    print('Start Auto Battle')
+                    sequence = data_login.get('sequence')
+                    complete = sequence.get('completed')
+                    if complete == False:
+                        enemy = sequence.get('enemy')
+                        print(list_boss)
+                        data_json = [json.loads(item) for item in list_boss]
+                        data = get_data_by_id(data_json, enemy)
+                        if data:
+                            list = data['squence']
+                            for index, i in enumerate(list):
+                                time.sleep(2)
+                                payload = {'sequence': i}
+                                data_sequence = put_squence(token, payload)
+                                if data_sequence is not None:
+                                    message = data_sequence.get('message')
+                                    if message == 'Sequence checked successfully':
+                                        print(f"Attack {index+1} Done, Reward : {data_sequence.get('reward')}")
+
+                        else:
+                            print("Monster not found in Database")
+                    else:
+                        print('Battle Not Ready')
+                        
+
+                if auto_update =='y':
+                    if energy_level < max_level:
+                        print("Upgraded energy")
+                        time.sleep(1)
+                        data_upgrade = upgrade_energy(token)
+                        if data_upgrade is not None:
+                            print(f"Upgraded energy cap to {data_upgrade.get('energy_level')}")
+                        time.sleep(2)
+                    if click_level < max_level:
+                        print("Upgraded multitap")
+                        time.sleep(1)
+                        data_upgrade = upgrade_multitap(token)
+                        if data_upgrade is not None:
+                            print(f"Upgraded energy cap to {data_upgrade.get('click_level')}")
+                        time.sleep(2)
+
+                
+
                 while True:
                     time.sleep(2)
-                    tap = random.randint(50, 60)
+                    tap = random.randint(70,150)
 
                     if energy < tap:
                         tap = energy
@@ -301,11 +430,22 @@ def main():
                         energy = user_energy
                     
                     if energy < 50:
-                        print()
-                        break
-        delay = random.randint(300, 500)
-        printdelay(delay)
-        time.sleep(delay)
+                        if refills < 6:
+                            data_refill = refill(token)
+                            if data_refill is not None:
+                                time.sleep(1)
+                                energy = data_refill.get('energy')
+                                print(f'Refill energy {energy} | Remaining refills {refills-1}')
+                                refills += 1
+                            else:
+                                print()
+                                break
+                        else:
+                            print()
+                            break
+        # delay = random.randint(300, 500)
+        # printdelay(delay)
+        # time.sleep(delay)
 
 def printdelay(delay):
     now = datetime.now().isoformat(" ").split(".")[0]
