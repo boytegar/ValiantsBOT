@@ -244,7 +244,7 @@ def refill(token):
         print(f'Error making request: {e}')
         return None
 
-def unlocks(token, payload):
+def unlock(token, payload):
     url = 'https://mini.playvaliants.com/api/unlock'
     headers['authorization'] = f'Bearer {token}'
     try:
@@ -292,11 +292,14 @@ def get_data_by_id(list_boss, id):
 def main():
     
     mission = input("Enter 'y' for mission or 'n' to skip: ")
-    auto_battle = input("Enter 'y' for auto battle or 'n' to skip: ")
+    # auto_battle = input("Enter 'y' for auto battle or 'n' to skip: ")
     auto_combo = input("Enter 'y' for auto combo or 'n' to skip: ")
     auto_update = input("Enter 'y' for auto update or 'n' to skip: ")
+    auto_card = input("Enter 'y' for auto update card or 'n' to skip: ")
     if auto_update == 'y':
         max_level = int(input("Enter the maximum level upgrade: "))
+    if auto_card == 'y':
+        max_card = int(input("Enter the maximum level card upgrade : "))
     while True:
         list_combo = []
         queries = load_credentials()
@@ -369,14 +372,14 @@ def main():
                         data_combo_claim = combo_claim(token)
                         if data_combo_claim is not None:
                             print(f"Status : {data_combo_claim.get('message')} Reward : {data_combo_claim.get('reward')}")
-
+                
+                auto_battle = 'n'
                 if auto_battle == 'y':
                     print('Start Auto Battle')
                     sequence = data_login.get('sequence')
                     complete = sequence.get('completed')
                     if complete == False:
                         enemy = sequence.get('enemy')
-                        print(list_boss)
                         data_json = [json.loads(item) for item in list_boss]
                         data = get_data_by_id(data_json, enemy)
                         if data:
@@ -395,7 +398,6 @@ def main():
                     else:
                         print('Battle Not Ready')
                         
-
                 if auto_update =='y':
                     if energy_level < max_level:
                         print("Upgraded energy")
@@ -412,7 +414,20 @@ def main():
                             print(f"Upgraded energy cap to {data_upgrade.get('click_level')}")
                         time.sleep(2)
 
-                
+                if auto_card == 'y':
+                    unlocks = data_login.get('unlocks')
+                    for i in range(1, 25):
+                        card = unlocks.get(f'{i}',{'count': 0})
+                        count = card.get('count', 0)
+                        if count < max_card:
+                            time.sleep(2)
+                            payload = {'id': i}
+                            data_unlock = unlock(token, payload)
+                            if data_unlock is not None:
+                                unlock_number = data_unlock.get('unlock_number')
+                                print(f"Upgrade card {i} done to level {unlock_number}")
+
+
 
                 while True:
                     time.sleep(2)
@@ -435,7 +450,7 @@ def main():
                             if data_refill is not None:
                                 time.sleep(1)
                                 energy = data_refill.get('energy')
-                                print(f'Refill energy {energy} | Remaining refills {refills-1}')
+                                print(f'Refill energy {energy} |  Refills Use {refills+1}')
                                 refills += 1
                             else:
                                 print()
