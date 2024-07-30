@@ -365,7 +365,7 @@ def main():
                         for ids in list_combo:
                             time.sleep(2)
                             payload = {'id': ids}
-                            data_unlocks = unlocks(token, payload)
+                            data_unlocks = unlock(token, payload)
                             if data_unlocks is not None:
                                 print(f"Card Id : {ids} | Unlock perHours : {data_unlocks.get('unlock_experience_per_hour')} | Status Combo : {data_unlocks.get('combo_completed')}")
                         time.sleep(2)
