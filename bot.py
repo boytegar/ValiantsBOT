@@ -458,9 +458,9 @@ def main():
                         else:
                             print()
                             break
-        # delay = random.randint(300, 500)
-        # printdelay(delay)
-        # time.sleep(delay)
+        delay = random.randint(300, 500)
+        printdelay(delay)
+        time.sleep(delay)
 
 def printdelay(delay):
     now = datetime.now().isoformat(" ").split(".")[0]
